@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 
-if [[ $# -eq 1 ]]; then
-	selected=$1
-else
-	selected=$(find ~/work/*/ /data/*/git/ ~/.config/ -mindepth 1 -maxdepth 1 -type d | fzf)
+if [[ ! -f ~/.tmux-repo ]]; then
+	echo "~/.tmux-repo file not found"
+	exit 0
 fi
+
+if [[ ! -f ~/.tmux-repo.history ]]; then
+	touch ~/.tmux-repo.history
+fi
+
+to_find_path=$(echo $(sed "s/~\//\/$USER\//g" ~/.tmux-repo | tr -s '\n' ' '))
+
+search_paths=$(find $to_find_path -mindepth 1 -maxdepth 2 -type d -exec [ -e '{}/.git' ] ';' -prune -print)
+
+selected=$({
+	cat ~/.tmux-repo.history | awk '{print $2,$1}'
+	echo $search_paths | tr ' ' '\n' | awk '{print 0,$1}'
+} | sort -k 2 -r | uniq -f 1 | sort -k 1 -r | awk '{print $2}' | fzf)
 
 if [[ -z $selected ]]; then
 	exit 0
@@ -23,3 +35,11 @@ if ! tmux has-session -t=$selected_name 2>/dev/null; then
 fi
 
 tmux switch-client -t $selected_name
+
+nowtime=$(date +%s)
+
+if grep -q "$selected" ~/.tmux-repo.history; then
+	sed -i "s|$selected\s.*|$selected $nowtime|g" ~/.tmux-repo.history
+else
+	echo "$selected $nowtime" >>~/.tmux-repo.history
+fi
