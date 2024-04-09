@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+toClearSession=$(tmux ls | awk '{print substr($1, 1, length($1)-1)}' | fzf)
+
+if [[ -z $toClearSession ]]; then
+	exit 0
+fi
+
+tmux kill-session -t $toClearSession
+
+echo "Session $toClearSession cleared"
