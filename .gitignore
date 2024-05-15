@@ -1,5 +1,1 @@
-*
-!tmux.conf
-!.gitignore
-!tmux-sessionizer
-!tmux-clear
+plugins
